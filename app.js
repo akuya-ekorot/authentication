@@ -8,17 +8,24 @@ app.use(express.urlencoded({ extended: true }));
 const ejs = require("ejs");
 app.set("view engine", "ejs");
 
-//set up mongoose
+//set up mongoose and mongoose-encryption
 const mongoose = require("mongoose");
 mongoose.connect("mongodb://localhost:27017/userDB", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
 ////mongoose schema
-const userSchema = {
+const userSchema = new mongoose.Schema({
   email: String,
   password: String,
-};
+});
+
+////set up mongoose-encryption
+const encrypt = require("mongoose-encryption");
+const secret =
+  "3scUcyejRy2dB$n@NtwW6j8aifrBOcV#j!yCy&$ypupVEmi04J7zl3S4Ny9m*pUkhrVftfWlGxMKajEj&e8jKd5gmVZiyWrGIox";
+userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
+
 ////mongoose model
 const User = new mongoose.model("User", userSchema);
 
