@@ -1,6 +1,9 @@
 //set up dotenv
 require("dotenv").config();
 
+//set up md5 hash
+const md5 = require('md5');
+
 //set up express
 const express = require("express");
 const app = express();
@@ -22,10 +25,6 @@ const userSchema = new mongoose.Schema({
   email: String,
   password: String,
 });
-
-////set up mongoose-encryption
-const encrypt = require("mongoose-encryption");
-userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ["password"] });
 
 ////mongoose model
 const User = new mongoose.model("User", userSchema);
@@ -49,7 +48,7 @@ app
   .post((req, res) => {
     const newUser = new User({
       email: req.body.username,
-      password: req.body.password,
+      password: md5(req.body.password),
     });
 
     newUser.save((err) => {
@@ -76,7 +75,7 @@ app
         console.error(err);
       } else {
         if (user) {
-          if (user.password === req.body.password) {
+          if (user.password === md5(req.body.password)) {
             res.render("secrets");
           } else {
             res.send("Invalid password");
