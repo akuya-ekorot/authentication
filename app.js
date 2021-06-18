@@ -1,8 +1,9 @@
 //set up dotenv
 require("dotenv").config();
 
-//set up md5 hash
-const md5 = require('md5');
+//set up bcrypt
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 //set up express
 const express = require("express");
@@ -46,16 +47,22 @@ app
   })
   //post request
   .post((req, res) => {
-    const newUser = new User({
-      email: req.body.username,
-      password: md5(req.body.password),
-    });
-
-    newUser.save((err) => {
+    bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
       if (err) {
-        console.error(err);
+        console.log(err);
       } else {
-        res.render("secrets");
+        const newUser = new User({
+          email: req.body.username,
+          password: hash,
+        });
+
+        newUser.save((err) => {
+          if (err) {
+            console.error(err);
+          } else {
+            res.render("secrets");
+          }
+        });
       }
     });
   });
@@ -75,11 +82,17 @@ app
         console.error(err);
       } else {
         if (user) {
-          if (user.password === md5(req.body.password)) {
-            res.render("secrets");
-          } else {
-            res.send("Invalid password");
-          }
+          bcrypt.compare(req.body.password, user.password, (err, result) => {
+            if (err) {
+              console.error(err);
+            } else {
+              if (result === true) {
+                res.render("secrets");
+              } else {
+                res.send("Invalid password");
+              }
+            }
+          });
         } else {
           res.send("No user found");
         }
